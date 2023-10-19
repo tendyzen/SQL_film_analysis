@@ -1,0 +1,14 @@
+SELECT  film.title, ca.name, film.rating, i.film_id, film.rental_rate, COUNT( film.title) AS rental_count, 									
+	    SUM(pa.amount) AS total_revenue, count AS inventory_count, (count * replacement_cost) AS inventory_cost								
+FROM inventory i									
+JOIN film ON film.film_id = i.film_id									
+JOIN rental re ON re.inventory_id = i.inventory_id									
+JOIN payment pa ON pa.rental_id = re.rental_id									
+JOIN film_category fc ON fc.film_id = film.film_id									
+JOIN category ca ON ca.category_id = fc.category_id									
+JOIN (SELECT COUNT(film_id), film_id 									
+	  FROM inventory 								
+	  GROUP BY film_id) AS inventory_count ON inventory_count.film_id = film.film_id								
+GROUP BY i.film_id, inventory_count.count, rental_rate, film.replacement_cost, title, ca.name, film.rating									
+ORDER BY film_id									
+;									
