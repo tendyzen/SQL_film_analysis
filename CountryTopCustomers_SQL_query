@@ -1,0 +1,34 @@
+WITH country_customers AS (									
+	SELECT co.country,  								
+		   COUNT(DISTINCT cu.customer_id) AS customer_count							
+	FROM country co								
+	JOIN city ci ON ci.country_id = co.country_id								
+	JOIN address ad ON ad.city_id = ci.city_id								
+	JOIN customer cu ON cu.address_id = ad.address_id								
+	GROUP BY country								
+	)								
+									
+SELECT co.country, country_customers.customer_count AS customer_count,									
+	   ranked_customers.customer_id, 								
+	   ranked_customers.customer AS top_customer, ranked_customers.amount								
+FROM country co									
+JOIN country_customers ON country_customers.country = co.country									
+JOIN city ci ON ci.country_id = co.country_id									
+JOIN address ad ON ad.city_id = ci.city_id									
+JOIN customer cu ON cu.address_id = ad.address_id									
+LEFT JOIN (									
+	SELECT pa.customer_id, CONCAT(cu.first_name, ' ', cu.last_name) AS customer, SUM(pa.amount) AS amount,								
+		   RANK() OVER (PARTITION BY co.country ORDER BY SUM(pa.amount) DESC) AS ranks							
+	FROM payment pa								
+	JOIN customer cu ON cu.customer_id = pa.customer_id								
+	JOIN address ad ON ad.address_id = cu.address_id								
+	JOIN city ci ON ci.city_id = ad.city_id								
+	JOIN country co ON co.country_id = ci.country_id								
+	GROUP BY pa.customer_id, co.country, cu.first_name, cu.last_name								
+	) AS ranked_customers ON ranked_customers.customer_id = cu.customer_id 								
+WHERE ranked_customers.ranks = 1									
+GROUP BY co.country, ranked_customers.customer, 									
+		 ranked_customers.customer_id, ranked_customers.amount, 							
+		 country_customers.customer_count							
+ORDER BY customer_count DESC
+;									
