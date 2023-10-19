@@ -1,0 +1,32 @@
+WITH CategoryCost AS (
+    SELECT
+        ca.name AS category,
+        COUNT(DISTINCT fi.film_id) AS film_count,
+        SUM(replacement_cost) AS category_cost
+    FROM film fi
+    JOIN inventory i ON i.film_id = fi.film_id
+    JOIN film_category fc ON fc.film_id = fi.film_id
+    JOIN category ca ON ca.category_id = fc.category_id
+    GROUP BY ca.name
+),
+CategoryRevenue AS (
+    SELECT ca.name AS category,
+        SUM(pa.amount) AS total_revenue
+    FROM payment pa
+    JOIN rental re ON re.rental_id = pa.rental_id
+    JOIN inventory i ON i.inventory_id = re.inventory_id
+    JOIN film fi ON fi.film_id = i.film_id
+    JOIN film_category fc ON fc.film_id = fi.film_id
+    JOIN category ca ON ca.category_id = fc.category_id
+    GROUP BY ca.name
+)
+SELECT
+    cc.category,
+    cc.film_count,
+    cc.category_cost,
+    cr.total_revenue,
+    ROUND(NULLIF(cr.total_revenue, 0)/cc.category_cost, 2) AS profit_factor
+FROM CategoryCost cc
+LEFT JOIN CategoryRevenue cr ON cc.category = cr.category
+ORDER BY cc.category ASC
+;
