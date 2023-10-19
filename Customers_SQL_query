@@ -1,0 +1,11 @@
+SELECT ad.postal_code, ci.city, country, cu.customer_id,					
+	   CONCAT(cu.first_name, ' ', cu.last_name) AS customer, 				
+	   SUM(pa.amount) AS total_spend				
+FROM address ad					
+JOIN city ci ON ci.city_id = ad.city_id					
+JOIN country co ON co.country_id = ci.country_id					
+JOIN customer cu ON cu.address_id = ad.address_id					
+JOIN payment pa ON pa.customer_id = cu.customer_id					
+GROUP BY cu.customer_id, ad.city_id, co.country, ad.postal_code,					
+		 ci.city, customer			
+ORDER BY total_spend DESC;					
